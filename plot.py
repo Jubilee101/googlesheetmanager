@@ -152,6 +152,45 @@ def plot_sheet_2():
     score = []
     score = score + clean_float(sheet.row_values(10))
     plot_density(score, "score.pdf", 0)
+
+def plot_contributor_background_area(summary_sheet):
+    total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
+    ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
+    se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
+    id = summary_sheet.col_values(1)[1:]
+    colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
+    fig,ax = plt.subplots()
+    plt.stackplot(id, ml, se, labels=['ML', 'SE'], colors=colors)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize(5)
+    plt.savefig(BASE_DIR + '/contributors_area.pdf')
+    plt.close()
+
+def plot_contributor_background_stacked(summary_sheet):
+    total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
+    ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
+    se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
+    id = summary_sheet.col_values(1)[1:]
+    colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
+    fig,ax = plt.subplots()
+    bottom = np.zeros(30)
+    ax.bar(id, ml, label='ML', color=colors[1], bottom=bottom)
+    bottom += ml
+    ax.bar(id, se, label = 'SE', color=colors[0],bottom=bottom)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize(5)
+    plt.savefig(BASE_DIR + '/contributors_stacked.pdf')
+    plt.close()
+
+def plot_contributor_background_scattered(summary_sheet):
+    total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
+    ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
+    se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
+    id = summary_sheet.col_values(1)[1:]
+    plt.scatter(ml, se, color='black')
+    
+    plt.savefig(BASE_DIR + '/contributors_scatter.pdf')
+    plt.close()
     
 def plot_attributes(summary_sheet, col, name):
     values = summary_sheet.col_values(col)[1:]
@@ -162,9 +201,11 @@ def plot_attributes(summary_sheet, col, name):
         group[val][0] += 1
     n = len(group)
     colors = plt.cm.gray(np.linspace(0, 1, n+1))
+
     fig, ax = plt.subplots(figsize=(7, 1))
     left = [0]
     i = 0
+    print(name)
     for cat, count in group.items():
         ax.barh([""], count, label=cat, left=left, color=colors[i])
         print(cat)
@@ -182,8 +223,7 @@ def main():
     gc = gspread.oauth()
     sheet = gc.open_by_key(SPREADSHEET_ID)
     summary_sheet = sheet.worksheet("Summary Table")
-    for name, col in RQS.items():
-        plot_attributes(summary_sheet, col, name+".pdf")
+    plot_contributor_background_scattered(summary_sheet)
 
 
 if __name__ == '__main__':
