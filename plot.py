@@ -214,19 +214,20 @@ def plot_contributor_background_stacked(summary_sheet):
     other = np.array(list(map(lambda obj: obj.other, contributors)) ,dtype=int)
     id = list(map(lambda obj: obj.id, contributors)) 
 
-    colors = plt.cm.gray(np.linspace(0, 1, 5))
+    colors = plt.cm.gray(np.linspace(0, 1, 10))
     fig,ax = plt.subplots()
     bottom = np.zeros(30)
-    ax.bar(id, ml, label='ML', color=colors[3], bottom=bottom)
+    ax.bar(id, ml, label='ML', color=colors[9], bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += ml
-    ax.bar(id, se, label = 'SE', color=colors[2],bottom=bottom)
+    ax.bar(id, se, label = 'SE', color=colors[8],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += se
-    ax.bar(id, unsure, label = 'Unsure', color=colors[1],bottom=bottom)
+    ax.bar(id, unsure, label = 'Unsure', color=colors[4],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += unsure
-    ax.bar(id, other, label = 'Other', color=colors[0],bottom=bottom)
-    ax.legend()
+    ax.bar(id, other, label = 'Other', color=colors[0],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+    ax.legend(fontsize="17")
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
+    plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributors_stacked.pdf')
     plt.close()
 
@@ -239,7 +240,7 @@ def plot_contributor_background_scattered(summary_sheet):
     
     plt.savefig(BASE_DIR + '/contributors_scatter.pdf')
     plt.close()
-    
+
 def plot_attributes(summary_sheet, col, name):
     values = summary_sheet.col_values(col)[1:]
     group = {}
@@ -268,10 +269,10 @@ def plot_attributes(summary_sheet, col, name):
     fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
     plt.close()
 def main():
-    # gc = gspread.oauth()
-    # sheet = gc.open_by_key(SPREADSHEET_ID)
-    # summary_sheet = sheet.worksheet("Summary Table")
-    plot_score()
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
+    plot_contributor_background_stacked(summary_sheet)
 
 if __name__ == '__main__':
     main()
