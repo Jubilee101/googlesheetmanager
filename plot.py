@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 from scipy.stats import gaussian_kde
 import gspread
 RQS={"trajectory": 3, 
@@ -30,8 +31,8 @@ def clean_float(data):
         num = 0.0
         try:
             num = float(data[i])
-            if (num < 10):
-                output.append(num)
+            # if (num < 10):
+            output.append(num)
         except ValueError:
             print(data[i])
     return output
@@ -76,11 +77,26 @@ def plot_density(data, name, type=1):
     plt.savefig(BASE_DIR + '/density_' + name)
     plt.close()
 
+def plot_density_log(data, name, type=1):
+    input = np.array(data, dtype=int) if type == 1 else np.array(data, dtype=float)
+    # plt.hist(input, density=True)
+    kde = gaussian_kde(input)
+    x = np.linspace(0.1, max(input), 1000)
+    fig, ax = plt.subplots()
+    ax.semilogx(x, kde(x), base=2, color='grey')
+    colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
+    plt.fill_between(x, kde(x), where=x<1, alpha=0.3, color=colors[0])
+    plt.fill_between(x, kde(x), where=x>1, alpha=0.3, color=colors[1])
+    plt.ylim([0, 0.25])
+    plt.xlim([0.15, 14.6])
+    plt.savefig(BASE_DIR + '/density_' + name)
+    plt.close()
+
 def plot_two_cat(data, cat, name):
     data1 = []
     data2 = []
     for i in range(len(data)):
-        if cat[i] == 'Products based on personal interest':
+        if cat[i] == 'Products based on personal interest' or cat[i] == 'Research product':
             data1.append(data[i])
         elif cat[i] == 'Final end-user product':
             data2.append(data[i])
@@ -94,26 +110,31 @@ def plot_two_cat(data, cat, name):
     kde2 = gaussian_kde(input2)
     x1 = np.linspace(min(input), max(input), 1000)
     x2 = np.linspace(min(input), max(input), 1000)
-
-    plt.plot(x1, kde1(x1), color='blue')
-    plt.plot(x2, kde2(x2), color='red')
-    plt.fill_between(x1, kde1(x1), alpha=0.3, color='blue')
-    plt.fill_between(x2, kde2(x2), alpha=0.3, color='red')
-    plt.savefig(BASE_DIR + '/density_mobile_' + name)
+    colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
+    # plt.xscale('log')
+    plt.plot(x1, kde1(x1), alpha=0.5,color=colors[0])
+    plt.plot(x2, kde2(x2), alpha=0.5,color=colors[0])
+    plt.fill_between(x1, kde1(x1), alpha=0.5, color=colors[1])
+    plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
+    plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
 
-def plot_mobile_two_cat():
+def plot_two_cat_all():
     gc = gspread.oauth()
     sheet = gc.open_by_key(SPREADSHEET_ID)
-    sheet = sheet.worksheet("Mobile")
+    mobile_sheet = sheet.worksheet("Mobile")
+    desktop_sheet = sheet.worksheet("Desktop")
+    web_sheet = sheet.worksheet("Web")
+    work_sheets = [mobile_sheet, desktop_sheet, web_sheet]
     stars = []
     contribs = []
     codebase = []
-    cat = sheet.col_values(7)
-    cat = cat[1:]
-    stars = stars + clean(sheet.col_values(9))
-    contribs = contribs + clean(sheet.col_values(10))
-    codebase = codebase + clean(sheet.col_values(11))
+    cat = []
+    for ws in work_sheets:
+        cat = cat + ws.col_values(7)[1:]
+        stars = stars + clean(ws.col_values(9)[1:])
+        contribs = contribs + clean(ws.col_values(10)[1:])
+        codebase = codebase + clean(ws.col_values(11)[1:])
     plot_two_cat(stars, cat, "stars.pdf")
     plot_two_cat(contribs, cat, "contribs.pdf")
     plot_two_cat(codebase, cat, "codebase.pdf")
@@ -145,13 +166,13 @@ def plot_sheet_1():
     plot_density(contribs, "contribs.pdf")
     plot_density(codebase, "codebase.pdf")
 
-def plot_sheet_2():
+def plot_score():
     gc = gspread.oauth()
     sheets = gc.open_by_key(SPREADSHEET_ID_2)
     sheet = sheets.worksheet('Findings')
     score = []
     score = score + clean_float(sheet.row_values(10))
-    plot_density(score, "score.pdf", 0)
+    plot_density_log(score, "score.pdf", 0)
 
 def plot_contributor_background_area(summary_sheet):
     total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
@@ -170,13 +191,40 @@ def plot_contributor_background_stacked(summary_sheet):
     total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
     ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
     se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
+    unsure = np.array(summary_sheet.col_values(23)[1:], dtype=int)
+    other = np.array(summary_sheet.col_values(24)[1:], dtype=int)
     id = summary_sheet.col_values(1)[1:]
-    colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
+    class Contributor:
+        def __init__(self, total, ml, se, unsure, other, id):
+            self.total = total
+            self.ml = ml
+            self.se = se
+            self.other = other
+            self.unsure = unsure
+            self.id = id
+    contributors = []
+    for i in range(len(total)):
+        contributors.append(Contributor(total[i], ml[i], se[i], unsure[i], other[i], id[i]))
+    def sorter(item):
+        return -1 * item.total
+    contributors = sorted(contributors, key=sorter)
+    ml = np.array(list(map(lambda obj: obj.ml, contributors)) ,dtype=int)
+    se = np.array(list(map(lambda obj: obj.se, contributors)) ,dtype=int)
+    unsure = np.array(list(map(lambda obj: obj.unsure, contributors)) ,dtype=int)
+    other = np.array(list(map(lambda obj: obj.other, contributors)) ,dtype=int)
+    id = list(map(lambda obj: obj.id, contributors)) 
+
+    colors = plt.cm.gray(np.linspace(0, 1, 5))
     fig,ax = plt.subplots()
     bottom = np.zeros(30)
-    ax.bar(id, ml, label='ML', color=colors[1], bottom=bottom)
+    ax.bar(id, ml, label='ML', color=colors[3], bottom=bottom)
     bottom += ml
-    ax.bar(id, se, label = 'SE', color=colors[0],bottom=bottom)
+    ax.bar(id, se, label = 'SE', color=colors[2],bottom=bottom)
+    bottom += se
+    ax.bar(id, unsure, label = 'Unsure', color=colors[1],bottom=bottom)
+    bottom += unsure
+    ax.bar(id, other, label = 'Other', color=colors[0],bottom=bottom)
+    ax.legend()
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
     plt.savefig(BASE_DIR + '/contributors_stacked.pdf')
@@ -220,11 +268,10 @@ def plot_attributes(summary_sheet, col, name):
     fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
     plt.close()
 def main():
-    gc = gspread.oauth()
-    sheet = gc.open_by_key(SPREADSHEET_ID)
-    summary_sheet = sheet.worksheet("Summary Table")
-    plot_contributor_background_scattered(summary_sheet)
-
+    # gc = gspread.oauth()
+    # sheet = gc.open_by_key(SPREADSHEET_ID)
+    # summary_sheet = sheet.worksheet("Summary Table")
+    plot_score()
 
 if __name__ == '__main__':
     main()
