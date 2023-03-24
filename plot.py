@@ -91,10 +91,12 @@ def plot_density_log(data, name, type=1):
     plt.fill_between(x, kde(x), where=x>1, alpha=0.3, color=colors[1])
     plt.ylim([0, 0.25])
     plt.xlim([0.15, 14.6])
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f'{abs(x):g}' if x != 0 else '0'))
+    plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_' + name)
     plt.close()
 
-def plot_two_cat(data, cat, name):
+def plot_two_cat(data, cat, name, threshold=-1):
     data1 = []
     data2 = []
     for i in range(len(data)):
@@ -107,6 +109,12 @@ def plot_two_cat(data, cat, name):
     input = np.array(data, dtype=int)
     input1 = np.array(data1, dtype=int)
     input2 = np.array(data2, dtype=int)
+    size = len(input)
+    if threshold > 0:
+        input = input[input < threshold]
+        print(name + " get rid of " + str(size - len(input)))
+        input1 = input1[input1 < threshold]
+        input2 = input2[input2 < threshold]
     # plt.hist(input, density=True)
     kde1 = gaussian_kde(input1)
     kde2 = gaussian_kde(input2)
@@ -118,6 +126,7 @@ def plot_two_cat(data, cat, name):
     plt.plot(x2, kde2(x2), alpha=0.5,color=colors[0])
     plt.fill_between(x1, kde1(x1), alpha=0.5, color=colors[1])
     plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
+    plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
 
@@ -137,9 +146,9 @@ def plot_two_cat_all():
         stars = stars + clean(ws.col_values(9)[1:])
         contribs = contribs + clean(ws.col_values(10)[1:])
         codebase = codebase + clean(ws.col_values(11)[1:])
-    plot_two_cat(stars, cat, "stars.pdf")
-    plot_two_cat(contribs, cat, "contribs.pdf")
-    plot_two_cat(codebase, cat, "codebase.pdf")
+    plot_two_cat(stars, cat, "stars.pdf", 10000)
+    plot_two_cat(contribs, cat, "contribs.pdf", 170)
+    plot_two_cat(codebase, cat, "codebase.pdf", 1500000)
 
 def plot_sheet_1():
     gc = gspread.oauth()
@@ -293,27 +302,27 @@ def plot_contribution():
     ml_other = []
     for ws in work_sheets:
         values = ws.get_values()
-        se_se.append(values[1][2])
-        se_ml.append(values[2][2])
-        se_unsure.append(values[3][2])
-        se_other.append(values[4][2])
+        se_se.append(int(values[1][2])/int(values[0][0]))
+        se_ml.append(int(values[2][2])/int(values[0][0]))
+        se_unsure.append(int(values[3][2])/int(values[0][0]))
+        se_other.append(int(values[4][2])/int(values[0][0]))
 
-        ml_se.append(values[1][1])
-        ml_ml.append(values[2][1])
-        ml_unsure.append(values[3][1])
-        ml_other.append(values[4][1])
+        ml_se.append(int(values[1][1])/int(values[0][0]))
+        ml_ml.append(int(values[2][1])/int(values[0][0]))
+        ml_unsure.append(int(values[3][1])/int(values[0][0]))
+        ml_other.append(int(values[4][1])/int(values[0][0]))
     se_stacks = []
-    se_stacks.append(np.array(se_ml, dtype=int))
-    se_stacks.append(np.array(se_se, dtype=int))
-    se_stacks.append(np.array(se_unsure, dtype=int))
-    se_stacks.append(np.array(se_other, dtype=int))
+    se_stacks.append(np.array(se_ml, dtype=float))
+    se_stacks.append(np.array(se_se, dtype=float))
+    se_stacks.append(np.array(se_unsure, dtype=float))
+    se_stacks.append(np.array(se_other, dtype=float))
     se_bottom = np.zeros(29)
 
     ml_stacks = []
-    ml_stacks.append(np.array(ml_ml, dtype=int))
-    ml_stacks.append(np.array(ml_se, dtype=int))
-    ml_stacks.append(np.array(ml_unsure, dtype=int))
-    ml_stacks.append(np.array(ml_other, dtype=int))
+    ml_stacks.append(np.array(ml_ml, dtype=float))
+    ml_stacks.append(np.array(ml_se, dtype=float))
+    ml_stacks.append(np.array(ml_unsure, dtype=float))
+    ml_stacks.append(np.array(ml_other, dtype=float))
     ml_bottom = np.zeros(29)
 
     colors = plt.cm.gray(np.linspace(0, 1, 10))
@@ -327,10 +336,10 @@ def plot_contribution():
     for i in range(len(ml_stacks)):
         ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]], bottom=ml_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
         ml_bottom -= ml_stacks[i]
-    plt.legend( fontsize="5", loc='lower right')
+    plt.legend( fontsize="10", loc='lower left')
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
-    plt.yscale('symlog', base=2)
+    # plt.yscale('symlog', base=2)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
@@ -341,8 +350,9 @@ def main():
     # sheet = gc.open_by_key(SPREADSHEET_ID)
     # summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
-    # plot_contribution()
-    
+    plot_contribution()
+    # plot_two_cat_all()
+
 
 if __name__ == '__main__':
     main()
