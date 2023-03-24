@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 from scipy.stats import gaussian_kde
+import matplotlib.ticker as ticker
 import gspread
 RQS={"trajectory": 3, 
      "modularity": 5, 
@@ -18,6 +19,7 @@ RQS={"trajectory": 3,
      }
 SPREADSHEET_ID = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
 SPREADSHEET_ID_2 = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
+CONTRIBUTION_SHEET_ID = '1vMQYHcVIx4ewd5gXHwVmY5thNCeiwsg8YfXwJ2ri1c4'
 BASE_DIR = 'plots'
 def clean(data):
     output = []
@@ -268,11 +270,79 @@ def plot_attributes(summary_sheet, col, name):
     plt.tight_layout()
     fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
     plt.close()
-def main():
+
+def plot_contribution():
     gc = gspread.oauth()
-    sheet = gc.open_by_key(SPREADSHEET_ID)
-    summary_sheet = sheet.worksheet("Summary Table")
-    plot_contributor_background_stacked(summary_sheet)
+    sheet = gc.open_by_key(CONTRIBUTION_SHEET_ID)
+    sheet_ids = []
+    for i in range(1, 31):
+        if i == 22:
+            continue
+        sheet_ids.append("P" + str(i))
+    work_sheets = []
+    for id in sheet_ids:
+        work_sheets.append(sheet.worksheet(id))
+    se_se = []
+    se_ml = []
+    se_unsure = []
+    se_other = []
+
+    ml_se = []
+    ml_ml = []
+    ml_unsure = []
+    ml_other = []
+    for ws in work_sheets:
+        values = ws.get_values()
+        se_se.append(values[1][2])
+        se_ml.append(values[2][2])
+        se_unsure.append(values[3][2])
+        se_other.append(values[4][2])
+
+        ml_se.append(values[1][1])
+        ml_ml.append(values[2][1])
+        ml_unsure.append(values[3][1])
+        ml_other.append(values[4][1])
+    se_stacks = []
+    se_stacks.append(np.array(se_ml, dtype=int))
+    se_stacks.append(np.array(se_se, dtype=int))
+    se_stacks.append(np.array(se_unsure, dtype=int))
+    se_stacks.append(np.array(se_other, dtype=int))
+    se_bottom = np.zeros(29)
+
+    ml_stacks = []
+    ml_stacks.append(np.array(ml_ml, dtype=int))
+    ml_stacks.append(np.array(ml_se, dtype=int))
+    ml_stacks.append(np.array(ml_unsure, dtype=int))
+    ml_stacks.append(np.array(ml_other, dtype=int))
+    ml_bottom = np.zeros(29)
+
+    colors = plt.cm.gray(np.linspace(0, 1, 10))
+    fig, ax = plt.subplots()
+    color_indexes = [9, 8, 4, 0]
+    labels = ['ML','SE','Unsure','Other']
+
+    for i in range(len(se_stacks)):
+        ax.bar(sheet_ids, se_stacks[i], label=labels[i], color=colors[color_indexes[i]], bottom=se_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+        se_bottom += se_stacks[i]
+    for i in range(len(ml_stacks)):
+        ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]], bottom=ml_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+        ml_bottom -= ml_stacks[i]
+    plt.legend( fontsize="5", loc='lower right')
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize(5)
+    plt.yscale('symlog', base=2)
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
+    plt.tight_layout()
+    plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
+    plt.close()
+    
+def main():
+    # gc = gspread.oauth()
+    # sheet = gc.open_by_key(SPREADSHEET_ID)
+    # summary_sheet = sheet.worksheet("Summary Table")
+    # plot_contributor_background_stacked(summary_sheet)
+    # plot_contribution()
+    
 
 if __name__ == '__main__':
     main()
