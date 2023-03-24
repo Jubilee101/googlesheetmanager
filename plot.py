@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import numpy as np
 import math
 from scipy.stats import gaussian_kde
@@ -99,11 +100,22 @@ def plot_density_log(data, name, type=1):
 def plot_two_cat(data, cat, name, threshold=-1):
     data1 = []
     data2 = []
+    num1 = 0
+    num2 = 0
+    num3 = 0
     for i in range(len(data)):
         if cat[i] == 'Products based on personal interest' or cat[i] == 'Research product':
             data1.append(data[i])
+            if (cat[i] == 'Products based on personal interest'):
+                num1 += 1
+            else:
+                num2 += 1
         elif cat[i] == 'Final end-user product':
             data2.append(data[i])
+            num3+=1
+        else:
+            print('no match')
+            print(cat[i])
     print(len(data1))
     print(len(data2))
     input = np.array(data, dtype=int)
@@ -129,6 +141,11 @@ def plot_two_cat(data, cat, name, threshold=-1):
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
+    print('b')
+    print(num1)
+    print(num2)
+    print(num3)
+    print('e')
 
 def plot_two_cat_all():
     gc = gspread.oauth()
@@ -144,6 +161,7 @@ def plot_two_cat_all():
     for ws in work_sheets:
         cat = cat + ws.col_values(7)[1:]
         stars = stars + clean(ws.col_values(9)[1:])
+        print(len(stars))
         contribs = contribs + clean(ws.col_values(10)[1:])
         codebase = codebase + clean(ws.col_values(11)[1:])
     plot_two_cat(stars, cat, "stars.pdf", 10000)
@@ -260,21 +278,30 @@ def plot_attributes(summary_sheet, col, name):
             group[val] = [0]
         group[val][0] += 1
     n = len(group)
-    colors = plt.cm.gray(np.linspace(0, 1, n+1))
+    colors = plt.cm.gray(np.linspace(0, 1, n))
 
-    fig, ax = plt.subplots(figsize=(7, 1))
+    fig, ax = plt.subplots(figsize=(7, 1.5))
     left = [0]
     i = 0
     print(name)
+    label = 'a'
+    bbox = dict(boxstyle="Circle", fc="1")
+    arrowprops = dict(
+    arrowstyle="->",
+    connectionstyle="angle,angleA=0,angleB=90,rad=5")
+    offset = 20
     for cat, count in group.items():
-        ax.barh([""], count, label=cat, left=left, color=colors[i])
+        p = ax.barh([""], count, label=cat, left=left, color=colors[i], edgecolor='black',linestyle='solid',linewidth=0.5)
+        # ax.bar_label(p, label_type='center', labels=[('('+label+')')], color='white')
+        ax.annotate(label, (left[0] + count[0] // 2, 0.38),xytext=(offset, offset), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='12')
+        label = chr(ord(label) + 1)
         print(cat)
         left[0] += count[0]
         i+=1
-    # ax.set_ylim(0, 5)
+    ax.set_ylim(-0.5, 1)
     plt.xticks([])
     plt.yticks([])
-    plt.xlim(0,29.5)
+    plt.xlim(-0.5,32)
     ax.axis('off')
     plt.tight_layout()
     fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
@@ -350,9 +377,10 @@ def main():
     # sheet = gc.open_by_key(SPREADSHEET_ID)
     # summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
-    plot_contribution()
-    # plot_two_cat_all()
-
+    # plot_contribution()
+    plot_two_cat_all()
+    # for name, col in RQS.items():
+    #     plot_attributes(summary_sheet, col, name+'.pdf')
 
 if __name__ == '__main__':
     main()
