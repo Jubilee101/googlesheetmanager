@@ -7,6 +7,9 @@ import math
 from scipy.stats import gaussian_kde
 import matplotlib.ticker as ticker
 import gspread
+import plotly.io as pio
+import plotly.express as px
+import time
 RQS={"trajectory": 3, 
      "modularity": 5, 
      "model_type": 10,
@@ -19,7 +22,7 @@ RQS={"trajectory": 3,
      "model_evolution": 20
      }
 SPREADSHEET_ID = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
-SPREADSHEET_ID_2 = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
+# SPREADSHEET_ID_2 = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
 CONTRIBUTION_SHEET_ID = '1vMQYHcVIx4ewd5gXHwVmY5thNCeiwsg8YfXwJ2ri1c4'
 BASE_DIR = 'plots'
 def clean(data):
@@ -197,7 +200,7 @@ def plot_sheet_1():
 
 def plot_score():
     gc = gspread.oauth()
-    sheets = gc.open_by_key(SPREADSHEET_ID_2)
+    sheets = gc.open_by_key(SPREADSHEET_ID)
     sheet = sheets.worksheet('Findings')
     score = []
     score = score + clean_float(sheet.row_values(10))
@@ -371,16 +374,55 @@ def plot_contribution():
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
     plt.close()
-    
+def plot_sankey1():
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
+    col_pred_proc = summary_sheet.col_values(11)[1:]
+    col_fail_safe = summary_sheet.col_values(12)[1:]
+    labels = ["Augment", "Prompt", "Automate", "None", "No, but checked by confidence score", "Yes", "No, but user can retrain"]
+    label_index = {}
+    for i in range(len(labels)):
+        label_index[labels[i]] = i
+    links = {}
+    for i in range(len(col_pred_proc)):
+        if (col_fail_safe[i] == 'Unclear'):
+            continue
+        pair = (label_index[col_pred_proc[i]], label_index[col_fail_safe[i]])
+        if pair not in links:
+            links[pair] = 1
+        links[pair] += 1
+    source = []
+    target = []
+    value = []
+    for pair, count in links.items():
+        source.append(pair[0])
+        target.append(pair[1])
+        value.append(count)
+    link = dict(source = source, target = target, value = value)
+    node = dict(label = labels, 
+                pad = 5, 
+                thickness = 20,
+                color='grey')
+    data = go.Sankey(link = link, node = node)
+    some_name="some_figure.pdf"
+    fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    pio.write_image(fig, some_name)
+    time.sleep(2)
+    fig = go.Figure(data)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
+    pio.write_image(fig, BASE_DIR + '/sankey_pred_proc_fail_safe.pdf')
+
 def main():
     # gc = gspread.oauth()
     # sheet = gc.open_by_key(SPREADSHEET_ID)
     # summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
     # plot_contribution()
-    plot_two_cat_all()
+    # plot_two_cat_all()
     # for name, col in RQS.items():
     #     plot_attributes(summary_sheet, col, name+'.pdf')
+    plot_sankey1()
 
 if __name__ == '__main__':
     main()
