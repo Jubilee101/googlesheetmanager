@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import plotly.graph_objects as go
 import numpy as np
 import math
@@ -142,6 +143,9 @@ def plot_two_cat(data, cat, name, threshold=-1):
     plt.plot(x2, kde2(x2), alpha=0.5,color=colors[0])
     plt.fill_between(x1, kde1(x1), alpha=0.5, color=colors[1])
     plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
+    patch1 = mpatches.Patch(color=colors[1], label='End-user')
+    patch2 = mpatches.Patch(color=colors[0], label='Personal interest/Research based')
+    plt.legend(handles=[patch1, patch2],fontsize="14")
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
@@ -403,14 +407,17 @@ def plot_sankey1():
     # source = [0] + source[:len(source)-1]
     # target = [3] + target[:len(target)-1]
     # value = [2] + value[:len(value)-1]
-    cmap = np.array(cc.CET_I1)
-    colors = cmap[np.linspace(0, len(cmap) - 1, 5).astype(int)]
-    colors_op = []
-    for color in colors:
-        rgba = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.3,)
-        rgba_string = 'rgba(' + ','.join(map(str, rgba)) + ')'
+    # cmap = np.array(cc.CET_C6)
+    # colors = cmap[np.linspace(0, len(cmap) - 1, 5).astype(int)]
+    # colors[0] = '#EBB02D'
+    # colors_op = []
+    # for color in colors:
+    #     rgba = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.3,)
+    #     rgba_string = 'rgba(' + ','.join(map(str, rgba)) + ')'
 
-        colors_op.append(rgba_string)
+    # colors_op.append(rgba_string)
+    # colors_op = ['rgba(235,176,45,0.3)', 'rgba(157,186,0,0.3)', 'rgba(37,232,231,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)']
+    colors_op = ['rgba(235,176,45,0.3)', 'rgba(235,176,45,0.3)', 'rgba(235,176,45,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)']
     link = dict(source = source, target = target, value = value, color=colors_op)
     # node = dict(label = labels, 
     #             pad = 5, 
