@@ -9,6 +9,7 @@ import matplotlib.ticker as ticker
 import gspread
 import plotly.io as pio
 import plotly.express as px
+import colorcet as cc
 import time
 RQS={"trajectory": 3, 
      "modularity": 5, 
@@ -380,17 +381,17 @@ def plot_sankey1():
     summary_sheet = sheet.worksheet("Summary Table")
     col_pred_proc = summary_sheet.col_values(11)[1:]
     col_fail_safe = summary_sheet.col_values(12)[1:]
-    labels = ["Augment", "Prompt", "Automate", "None", "No, but checked by confidence score", "Yes", "No, but user can retrain"]
+    labels = ["Prompt", "Augment", "Automate", "No: none", "No: score", "Yes", "No: retrain"]
     label_index = {}
     for i in range(len(labels)):
         label_index[labels[i]] = i
     links = {}
     for i in range(len(col_pred_proc)):
-        if (col_fail_safe[i] == 'Unclear'):
+        if (col_fail_safe[i] == 'Unsure'):
             continue
         pair = (label_index[col_pred_proc[i]], label_index[col_fail_safe[i]])
         if pair not in links:
-            links[pair] = 1
+            links[pair] = 0
         links[pair] += 1
     source = []
     target = []
@@ -399,11 +400,27 @@ def plot_sankey1():
         source.append(pair[0])
         target.append(pair[1])
         value.append(count)
-    link = dict(source = source, target = target, value = value)
+    # source = [0] + source[:len(source)-1]
+    # target = [3] + target[:len(target)-1]
+    # value = [2] + value[:len(value)-1]
+    cmap = np.array(cc.CET_I1)
+    colors = cmap[np.linspace(0, len(cmap) - 1, 5).astype(int)]
+    colors_op = []
+    for color in colors:
+        rgba = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.3,)
+        rgba_string = 'rgba(' + ','.join(map(str, rgba)) + ')'
+
+        colors_op.append(rgba_string)
+    link = dict(source = source, target = target, value = value, color=colors_op)
+    # node = dict(label = labels, 
+    #             pad = 5, 
+    #             thickness = 20,
+    #             color='grey')
     node = dict(label = labels, 
                 pad = 5, 
-                thickness = 20,
-                color='grey')
+                thickness = 2,
+                color = 'black')
+    print(link)
     data = go.Sankey(link = link, node = node)
     some_name="some_figure.pdf"
     fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
