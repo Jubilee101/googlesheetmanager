@@ -12,16 +12,36 @@ import plotly.io as pio
 import plotly.express as px
 import colorcet as cc
 import time
-RQS={"trajectory": 3, 
-     "modularity": 5, 
-     "model_type": 10,
-     "failsafe" : 12,
-     "prediction_processing": 11,
-     "model_importance": 13,
-     "mutilple_model_dependency": 14,
-     "pipeline": 15,
-     "testing": 19,
-     "model_evolution": 20
+RQS={"trajectory": (3, 
+                    {"model-first": [0], 
+                     "product-first": [0], 
+                     "unsure":[0]
+                     }
+                     ), 
+     "modularity": (5, {}), 
+     "model_type": (10, {"Library/API": [0],
+                        "Pre-trained model":[0],
+                        "Own basic script": [0],
+                        "Self-trained model": [0]}),
+     "failsafe" : (12, {}),
+     "prediction_processing": (11, {}),
+     "model_importance": (13, {}),
+     "mutilple_model_dependency": (14, {"No":[0],
+                                        "Yes, separate functions":[0],
+                                        "Yes, used as alternative":[0],
+                                        "Yes, chain of execution": [0],
+                                        "Yes, combine predictions": [0]}),
+     "pipeline": (15, {"No pipeline": [0],
+                       "partial pipeline for data fetch" : [0],
+                       "Not automated": [0],
+                       "Binded by GUI": [0],
+                       "Automated": [0]}),
+     "testing": (19, {"No": [0],
+                      "System": [0],
+                      "Model and sys": [0],
+                      "All": [0]}),
+     "model_evolution": (20, {"Static": [0],
+                              "Dynamic": [0]})
      }
 SPREADSHEET_ID = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
 # SPREADSHEET_ID_2 = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
@@ -278,9 +298,8 @@ def plot_contributor_background_scattered(summary_sheet):
     plt.savefig(BASE_DIR + '/contributors_scatter.pdf')
     plt.close()
 
-def plot_attributes(summary_sheet, col, name):
+def plot_attributes(summary_sheet, col, name, group={}):
     values = summary_sheet.col_values(col)[1:]
-    group = {}
     for val in values:
         if val not in group:
             group[val] = [0]
@@ -296,20 +315,21 @@ def plot_attributes(summary_sheet, col, name):
     bbox = dict(boxstyle="Circle", fc="1")
     arrowprops = dict(
     arrowstyle="->",
-    connectionstyle="angle,angleA=0,angleB=90,rad=5")
+    connectionstyle="angle,angleA=0,angleB=-90,rad=5")
     offset = 20
     for cat, count in group.items():
         p = ax.barh([""], count, label=cat, left=left, color=colors[i], edgecolor='black',linestyle='solid',linewidth=0.5)
         # ax.bar_label(p, label_type='center', labels=[('('+label+')')], color='white')
-        ax.annotate(label, (left[0] + count[0] // 2, 0.38),xytext=(offset, offset), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='12')
+        if i == 0 or i == len(group) - 1:
+            ax.annotate(label, (left[0] + count[0] // 2, 0.38),xytext=(offset, offset), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
         label = chr(ord(label) + 1)
         print(cat)
         left[0] += count[0]
         i+=1
-    ax.set_ylim(-0.5, 1)
+    ax.set_ylim(-0.5, 2)
     plt.xticks([])
     plt.yticks([])
-    plt.xlim(-0.5,32)
+    plt.xlim(-0.5,33)
     ax.axis('off')
     plt.tight_layout()
     fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
@@ -385,7 +405,7 @@ def plot_sankey1():
     summary_sheet = sheet.worksheet("Summary Table")
     col_pred_proc = summary_sheet.col_values(11)[1:]
     col_fail_safe = summary_sheet.col_values(12)[1:]
-    labels = ["Prompt", "Augment", "Automate", "No: none", "No: score", "Yes", "No: retrain"]
+    labels = [ "Augment", "Prompt","Automate", "No: retrain", "No: score","Yes", "No: none"]
     label_index = {}
     for i in range(len(labels)):
         label_index[labels[i]] = i
@@ -437,16 +457,118 @@ def plot_sankey1():
     fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
     pio.write_image(fig, BASE_DIR + '/sankey_pred_proc_fail_safe.pdf')
 
+def plot_sankey2():
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
+    col_tra = summary_sheet.col_values(3)[1:]
+    col_imp = summary_sheet.col_values(13)[1:]
+    labels = ["model-first", "product-first", "unsure", "Core", "Optional", "Significant"]
+    label_index = {}
+    for i in range(len(labels)):
+        label_index[labels[i]] = i
+    links = {}
+    for i in range(len(col_tra)):
+        if col_imp[i] == 'None':
+            continue
+        pair = (label_index[col_tra[i]], label_index[col_imp[i]])
+        if pair not in links:
+            links[pair] = 0
+        links[pair] += 1
+    source = []
+    target = []
+    value = []
+    for pair, count in links.items():
+        source.append(pair[0])
+        target.append(pair[1])
+        value.append(count)
+    # source = [0] + source[:len(source)-1]
+    # target = [3] + target[:len(target)-1]
+    # value = [2] + value[:len(value)-1]
+    # cmap = np.array(cc.CET_C6)
+    # colors = cmap[np.linspace(0, len(cmap) - 1, 5).astype(int)]
+    # colors[0] = '#EBB02D'
+    # colors_op = []
+    # for color in colors:
+    #     rgba = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.3,)
+    #     rgba_string = 'rgba(' + ','.join(map(str, rgba)) + ')'
+
+    # colors_op.append(rgba_string)
+    # colors_op = ['rgba(235,176,45,0.3)', 'rgba(157,186,0,0.3)', 'rgba(37,232,231,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)']
+    colors_op = ['rgba(235,176,45,0.3)', 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)']
+    link = dict(source = source, target = target, value = value, color=colors_op)
+    # node = dict(label = labels, 
+    #             pad = 5, 
+    #             thickness = 20,
+    #             color='grey')
+    node = dict(label = labels, 
+                pad = 5, 
+                thickness = 2,
+                color = 'black')
+    print(link)
+    data = go.Sankey(link = link, node = node)
+    some_name="some_figure.pdf"
+    fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    pio.write_image(fig, some_name)
+    time.sleep(2)
+    fig = go.Figure(data)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
+    pio.write_image(fig, BASE_DIR + '/sankey_trajetory_model_importance.pdf')
+
+def plot_sankey3():
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
+    col_mod = summary_sheet.col_values(5)[1:]
+    col_tra = summary_sheet.col_values(13)[1:]
+    labels = ["more modular", "less modular", "Core", "Optional", "Significant"]
+    label_index = {}
+    for i in range(len(labels)):
+        label_index[labels[i]] = i
+    links = {}
+    for i in range(len(col_mod)):
+        if col_tra[i] == 'None':
+            continue
+        pair = (label_index[col_mod[i]], label_index[col_tra[i]])
+        if pair not in links:
+            links[pair] = 0
+        links[pair] += 1
+    source = []
+    target = []
+    value = []
+    for pair, count in links.items():
+        source.append(pair[0])
+        target.append(pair[1])
+        value.append(count)
+    link = dict(source = source, target = target, value = value)
+    # node = dict(label = labels, 
+    #             pad = 5, 
+    #             thickness = 20,
+    #             color='grey')
+    node = dict(label = labels, 
+                pad = 5, 
+                thickness = 2,
+                color = 'black')
+    print(link)
+    data = go.Sankey(link = link, node = node)
+    some_name="some_figure.pdf"
+    fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    pio.write_image(fig, some_name)
+    time.sleep(2)
+    fig = go.Figure(data)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
+    pio.write_image(fig, BASE_DIR + '/sankey_modular_model_importance.pdf')
+
 def main():
-    # gc = gspread.oauth()
-    # sheet = gc.open_by_key(SPREADSHEET_ID)
-    # summary_sheet = sheet.worksheet("Summary Table")
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
     # plot_contribution()
     # plot_two_cat_all()
-    # for name, col in RQS.items():
-    #     plot_attributes(summary_sheet, col, name+'.pdf')
-    plot_sankey1()
+    for name, (col, group) in RQS.items():
+        plot_attributes(summary_sheet, col, name+'.pdf', group)
+    # plot_sankey3()
 
 if __name__ == '__main__':
     main()
