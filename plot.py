@@ -118,6 +118,8 @@ def plot_density_log(data, name, type=1):
     plt.ylim([0, 0.25])
     plt.xlim([0.15, 14.6])
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f'{abs(x):g}' if x != 0 else '0'))
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_' + name)
     plt.close()
@@ -165,7 +167,9 @@ def plot_two_cat(data, cat, name, threshold=-1):
     plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
     patch1 = mpatches.Patch(color=colors[1], label='End-user')
     patch2 = mpatches.Patch(color=colors[0], label='Personal interest/Research based')
-    plt.legend(handles=[patch1, patch2],fontsize="14")
+    # plt.legend(handles=[patch1, patch2],fontsize="14")
+    # plt.xticks(fontsize=25)
+    # plt.yticks(fontsize=25)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
@@ -315,21 +319,25 @@ def plot_attributes(summary_sheet, col, name, group={}):
     bbox = dict(boxstyle="Circle", fc="1")
     arrowprops = dict(
     arrowstyle="->",
-    connectionstyle="angle,angleA=0,angleB=-90,rad=5")
-    offset = 20
+    connectionstyle="arc3",
+    color='white')
+    offset_left = 40
+    offset_right = 25
     for cat, count in group.items():
         p = ax.barh([""], count, label=cat, left=left, color=colors[i], edgecolor='black',linestyle='solid',linewidth=0.5)
         # ax.bar_label(p, label_type='center', labels=[('('+label+')')], color='white')
-        if i == 0 or i == len(group) - 1:
-            ax.annotate(label, (left[0] + count[0] // 2, 0.38),xytext=(offset, offset), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
+        if i == 0:
+            ax.annotate(label, (left[0], 0),xytext=(-1 * offset_left, -8), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
+        elif i == len(group) - 1:
+            ax.annotate(label, (left[0] + count[0], 0),xytext=(offset_right, -8), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
         label = chr(ord(label) + 1)
         print(cat)
         left[0] += count[0]
         i+=1
-    ax.set_ylim(-0.5, 2)
+    ax.set_ylim(-0.5, 0.6)
     plt.xticks([])
     plt.yticks([])
-    plt.xlim(-0.5,33)
+    plt.xlim(-5,35)
     ax.axis('off')
     plt.tight_layout()
     fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
@@ -454,7 +462,7 @@ def plot_sankey1():
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=200, height=200, font_color='black',font_size=12)
     pio.write_image(fig, BASE_DIR + '/sankey_pred_proc_fail_safe.pdf')
 
 def plot_sankey2():
@@ -512,7 +520,7 @@ def plot_sankey2():
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=200, height=200, font_color='black',font_size=12)
     pio.write_image(fig, BASE_DIR + '/sankey_trajetory_model_importance.pdf')
 
 def plot_sankey3():
@@ -560,6 +568,7 @@ def plot_sankey3():
     pio.write_image(fig, BASE_DIR + '/sankey_modular_model_importance.pdf')
 
 def main():
+    plot_score()
     gc = gspread.oauth()
     sheet = gc.open_by_key(SPREADSHEET_ID)
     summary_sheet = sheet.worksheet("Summary Table")
@@ -568,7 +577,9 @@ def main():
     # plot_two_cat_all()
     for name, (col, group) in RQS.items():
         plot_attributes(summary_sheet, col, name+'.pdf', group)
-    # plot_sankey3()
+    # # plot_sankey3()
+    # plot_sankey1()
+    # plot_sankey2()
 
 if __name__ == '__main__':
     main()
