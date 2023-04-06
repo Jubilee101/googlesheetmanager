@@ -400,9 +400,17 @@ def plot_contribution():
         ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]], bottom=ml_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
         ml_bottom -= ml_stacks[i]
     plt.legend( fontsize="10", loc='lower left')
+    plt.text(-1.5, 0.1, "Non-ML Contribution", rotation=-90)
+    plt.text(-1.5, -0.6, "ML Contribution", rotation=-90)
+    ax.set_yticks([1, 0, -1])
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize(30)
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
-    # plt.yscale('symlog', base=2)
+    
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set_xlim([-2, 28.6])
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
@@ -568,15 +576,15 @@ def plot_sankey3():
     pio.write_image(fig, BASE_DIR + '/sankey_modular_model_importance.pdf')
 
 def main():
-    plot_score()
-    gc = gspread.oauth()
-    sheet = gc.open_by_key(SPREADSHEET_ID)
-    summary_sheet = sheet.worksheet("Summary Table")
+    # plot_score()
+    # gc = gspread.oauth()
+    # sheet = gc.open_by_key(SPREADSHEET_ID)
+    # summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
-    # plot_contribution()
+    plot_contribution()
     # plot_two_cat_all()
-    for name, (col, group) in RQS.items():
-        plot_attributes(summary_sheet, col, name+'.pdf', group)
+    # for name, (col, group) in RQS.items():
+    #     plot_attributes(summary_sheet, col, name+'.pdf', group)
     # # plot_sankey3()
     # plot_sankey1()
     # plot_sankey2()
