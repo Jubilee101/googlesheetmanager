@@ -167,7 +167,7 @@ def plot_two_cat(data, cat, name, threshold=-1):
     plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
     patch1 = mpatches.Patch(color=colors[1], label='End-user')
     patch2 = mpatches.Patch(color=colors[0], label='Personal interest/Research based')
-    # plt.legend(handles=[patch1, patch2],fontsize="14")
+    plt.legend(handles=[patch1, patch2],fontsize="22")
     # plt.xticks(fontsize=25)
     # plt.yticks(fontsize=25)
     plt.tight_layout()
@@ -276,7 +276,7 @@ def plot_contributor_background_stacked(summary_sheet):
     id = list(map(lambda obj: obj.id, contributors)) 
 
     colors = plt.cm.gray(np.linspace(0, 1, 10))
-    fig,ax = plt.subplots()
+    fig,ax = plt.subplots(figsize=(6.4, 2.4))
     bottom = np.zeros(30)
     ax.bar(id, ml, label='ML', color=colors[9], bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += ml
@@ -285,9 +285,14 @@ def plot_contributor_background_stacked(summary_sheet):
     ax.bar(id, unsure, label = 'Unsure', color=colors[4],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += unsure
     ax.bar(id, other, label = 'Other', color=colors[0],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
-    ax.legend(fontsize="17")
+    ax.legend(fontsize="22")
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set_yticks([0, 18])
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize(22)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributors_stacked.pdf')
     plt.close()
@@ -606,15 +611,15 @@ def plot_sankey3():
     pio.write_image(fig, BASE_DIR + '/sankey_modular_model_importance.pdf')
 
 def main():
-    plot_score()
-    gc = gspread.oauth()
-    sheet = gc.open_by_key(SPREADSHEET_ID)
-    summary_sheet = sheet.worksheet("Summary Table")
+    # plot_score()
+    # gc = gspread.oauth()
+    # sheet = gc.open_by_key(SPREADSHEET_ID)
+    # summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
     # plot_contribution()
-    # plot_two_cat_all()
-    for name, (col, group) in RQS.items():
-        plot_attributes(summary_sheet, col, name+'.pdf', group)
+    plot_two_cat_all()
+    # for name, (col, group) in RQS.items():
+    #     plot_attributes(summary_sheet, col, name+'.pdf', group)
     # # plot_sankey3()
     # plot_sankey1()
     # plot_sankey2()
