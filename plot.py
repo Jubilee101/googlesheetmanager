@@ -309,7 +309,7 @@ def plot_attributes(summary_sheet, col, name, group={}):
             group[val] = [0]
         group[val][0] += 1
     n = len(group)
-    colors = plt.cm.gray(np.linspace(0, 1, n))
+    colors = plt.cm.gray(np.linspace(0, 1, n + 2))
 
     fig, ax = plt.subplots(figsize=(7, 1.5))
     left = [0]
@@ -324,7 +324,7 @@ def plot_attributes(summary_sheet, col, name, group={}):
     offset_left = 40
     offset_right = 25
     for cat, count in group.items():
-        p = ax.barh([""], count, label=cat, left=left, color=colors[i], edgecolor='black',linestyle='solid',linewidth=0.5)
+        p = ax.barh([""], count, label=cat, left=left, color=colors[i + 2], edgecolor='black',linestyle='solid',linewidth=0.5)
         # ax.bar_label(p, label_type='center', labels=[('('+label+')')], color='white')
         if i == 0:
             ax.annotate(label, (left[0], 0),xytext=(-1 * offset_left, -8), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
@@ -363,17 +363,47 @@ def plot_contribution():
     ml_ml = []
     ml_unsure = []
     ml_other = []
+    class Node:
+        def __init__(self, se_se, se_ml, se_unsure, se_other, ml_se, ml_ml, ml_unsure, ml_other, id):
+            self.se_se = se_se
+            self.se_ml = se_ml
+            self.se_unsure = se_unsure
+            self.se_other = se_other
+            self.ml_se = ml_se
+            self.ml_ml = ml_ml
+            self.ml_unsure = ml_unsure
+            self.ml_other = ml_other
+            self.id = id
+            self.se_total = se_se + se_ml + se_unsure + se_other
+            self.ml_total = ml_se + ml_ml + ml_unsure + ml_other
+        
+    def sorter(node):
+        return -1 * node.ml_total
+    nodes = []
     for ws in work_sheets:
         values = ws.get_values()
-        se_se.append(int(values[1][2])/int(values[0][0]))
-        se_ml.append(int(values[2][2])/int(values[0][0]))
-        se_unsure.append(int(values[3][2])/int(values[0][0]))
-        se_other.append(int(values[4][2])/int(values[0][0]))
+        nodes.append(Node(int(values[1][2])/int(values[0][0]),
+                          int(values[2][2])/int(values[0][0]),
+                          int(values[3][2])/int(values[0][0]),
+                          int(values[4][2])/int(values[0][0]),
+                          int(values[1][1])/int(values[0][0]),
+                          int(values[2][1])/int(values[0][0]),
+                          int(values[3][1])/int(values[0][0]),
+                          int(values[4][1])/int(values[0][0]),
+                          ws.title))
+    nodes = sorted(nodes, key=sorter)
+    sheet_ids = []
+    for node in nodes:
+        se_se.append(node.se_se)
+        se_ml.append(node.se_ml)
+        se_unsure.append(node.se_unsure)
+        se_other.append(node.se_other)
 
-        ml_se.append(int(values[1][1])/int(values[0][0]))
-        ml_ml.append(int(values[2][1])/int(values[0][0]))
-        ml_unsure.append(int(values[3][1])/int(values[0][0]))
-        ml_other.append(int(values[4][1])/int(values[0][0]))
+        ml_se.append(node.ml_se)
+        ml_ml.append(node.ml_ml)
+        ml_unsure.append(node.ml_unsure)
+        ml_other.append(node.ml_other)
+        sheet_ids.append(node.id)
     se_stacks = []
     se_stacks.append(np.array(se_ml, dtype=float))
     se_stacks.append(np.array(se_se, dtype=float))
@@ -399,18 +429,18 @@ def plot_contribution():
     for i in range(len(ml_stacks)):
         ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]], bottom=ml_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
         ml_bottom -= ml_stacks[i]
-    plt.legend( fontsize="10", loc='lower left')
-    plt.text(-1.5, 0.1, "Non-ML Contribution", rotation=-90)
-    plt.text(-1.5, -0.6, "ML Contribution", rotation=-90)
+    plt.legend( fontsize="22", loc='lower right')
+    plt.text(-2, 0.2, "Non-ML", rotation=-90, fontsize="20")
+    plt.text(-2, -0.5, "ML", rotation=-90, fontsize="20")
     ax.set_yticks([1, 0, -1])
     for tick in ax.get_yticklabels():
-        tick.set_fontsize(30)
+        tick.set_fontsize(22)
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
     
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.set_xlim([-2, 28.6])
+    ax.set_xlim([-2.5, 28.6])
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
@@ -576,15 +606,15 @@ def plot_sankey3():
     pio.write_image(fig, BASE_DIR + '/sankey_modular_model_importance.pdf')
 
 def main():
-    # plot_score()
-    # gc = gspread.oauth()
-    # sheet = gc.open_by_key(SPREADSHEET_ID)
-    # summary_sheet = sheet.worksheet("Summary Table")
+    plot_score()
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
     # plot_contributor_background_stacked(summary_sheet)
-    plot_contribution()
+    # plot_contribution()
     # plot_two_cat_all()
-    # for name, (col, group) in RQS.items():
-    #     plot_attributes(summary_sheet, col, name+'.pdf', group)
+    for name, (col, group) in RQS.items():
+        plot_attributes(summary_sheet, col, name+'.pdf', group)
     # # plot_sankey3()
     # plot_sankey1()
     # plot_sankey2()
