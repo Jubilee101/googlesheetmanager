@@ -61,6 +61,8 @@ def clean_float(data):
             num = float(data[i])
             # if (num < 10):
             output.append(num)
+            # else:
+                # output.append(10)
         except ValueError:
             print(data[i])
     return output
@@ -110,21 +112,27 @@ def plot_density_log(data, name, type=1):
     # plt.hist(input, density=True)
     kde = gaussian_kde(input)
     x = np.linspace(0.1, max(input), 1000)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6.4, 2.4))
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     ax.semilogx(x, kde(x), base=2, color='grey')
     colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
     plt.fill_between(x, kde(x), where=x<1, alpha=0.3, color=colors[0])
     plt.fill_between(x, kde(x), where=x>1, alpha=0.3, color=colors[1])
     plt.ylim([0, 0.25])
-    plt.xlim([0.15, 14.6])
+    plt.xlim([0.15, 6])
+    ax.set_yticks([0, 0.25])
+    ax.set_xticks([0.25, 0.5, 1, 2, 4])
+    plt.xlabel('Relative Score', fontsize=22)
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f'{abs(x):g}' if x != 0 else '0'))
-    plt.xticks(fontsize=25)
-    plt.yticks(fontsize=25)
+    
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_' + name)
     plt.close()
 
-def plot_two_cat(data, cat, name, threshold=-1):
+def plot_two_cat(data, cat, name, threshold=-1, xticks=[], yticks=[], xlabel=''):
     data1 = []
     data2 = []
     num1 = 0
@@ -161,15 +169,38 @@ def plot_two_cat(data, cat, name, threshold=-1):
     x2 = np.linspace(min(input), max(input), 1000)
     colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
     # plt.xscale('log')
+    fig, ax = plt.subplots(figsize=(5.5, 2.4))
     plt.plot(x1, kde1(x1), alpha=0.5,color=colors[0])
     plt.plot(x2, kde2(x2), alpha=0.5,color=colors[0])
     plt.fill_between(x1, kde1(x1), alpha=0.5, color=colors[1])
     plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
     patch1 = mpatches.Patch(color=colors[1], label='End-user')
     patch2 = mpatches.Patch(color=colors[0], label='Personal interest/Research based')
-    plt.legend(handles=[patch1, patch2],fontsize="22")
+    # plt.legend(handles=[patch1, patch2],fontsize="14")
     # plt.xticks(fontsize=25)
     # plt.yticks(fontsize=25)
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
+    ax.yaxis.get_offset_text().set_fontsize(22)
+    if name == 'codebase.pdf':
+        ax.xaxis.get_offset_text().set_visible(False)
+        ax.set_xticklabels(['{:.1f}e6'.format(x/1000000) if x > 0 else 0 for x in ax.get_xticks()])
+        ax.yaxis.get_offset_text().set_visible(False)
+        ax.set_yticklabels(['{:.1f}e-6'.format(x * 1000000) if x > 0 else 0 for x in ax.get_yticks()])
+    if name == 'stars.pdf':
+        ax.xaxis.get_offset_text().set_visible(False)
+        ax.set_xticklabels(['{:.0f}e4'.format(x/10000) if x > 0 else 0 for x in ax.get_xticks()])
+        # ax.yaxis.get_offset_text().set_visible(True)
+        ax.set_yticklabels(['{}e-4'.format(int(x * 10000)) if x > 0 else 0 for x in ax.get_yticks()])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize(22)
+    for tick in ax.get_yticklabels():
+        tick.set_fontsize(22)
+    plt.ylim(bottom=0)
+    plt.xlim(left=0)
+    plt.xlabel(xlabel, fontsize=22, labelpad= -22)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
@@ -196,9 +227,9 @@ def plot_two_cat_all():
         print(len(stars))
         contribs = contribs + clean(ws.col_values(10)[1:])
         codebase = codebase + clean(ws.col_values(11)[1:])
-    plot_two_cat(stars, cat, "stars.pdf", 10000)
-    plot_two_cat(contribs, cat, "contribs.pdf", 170)
-    plot_two_cat(codebase, cat, "codebase.pdf", 1500000)
+    plot_two_cat(stars, cat, "stars.pdf", 10000, [0, 10000], [0.0007], 'Star')
+    plot_two_cat(contribs, cat, "contribs.pdf", 170, [0, 160], [0.06], 'Contributor Count')
+    plot_two_cat(codebase, cat, "codebase.pdf", 1500000, [0, 1.4e6], [3.5e-6], 'Codebase Size')
 
 def plot_sheet_1():
     gc = gspread.oauth()
@@ -276,7 +307,7 @@ def plot_contributor_background_stacked(summary_sheet):
     id = list(map(lambda obj: obj.id, contributors)) 
 
     colors = plt.cm.gray(np.linspace(0, 1, 10))
-    fig,ax = plt.subplots(figsize=(6.4, 2.4))
+    fig,ax = plt.subplots(figsize=(6.4, 3))
     bottom = np.zeros(30)
     ax.bar(id, ml, label='ML', color=colors[9], bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += ml
@@ -285,12 +316,15 @@ def plot_contributor_background_stacked(summary_sheet):
     ax.bar(id, unsure, label = 'Unsure', color=colors[4],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
     bottom += unsure
     ax.bar(id, other, label = 'Other', color=colors[0],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
-    ax.legend(fontsize="22")
+    ax.legend(fontsize="22", loc='upper right', bbox_to_anchor=(1, 1.2))
+    plt.xlim(-1,30)
+    plt.xlabel('Project', fontsize=22)
+    plt.ylabel('Count', fontsize=22, labelpad=-25)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.set_yticks([0, 18])
     for tick in ax.get_xticklabels():
-        tick.set_fontsize(5)
+        tick.set_fontsize(6)
     for tick in ax.get_yticklabels():
         tick.set_fontsize(22)
     plt.tight_layout()
@@ -424,7 +458,7 @@ def plot_contribution():
     ml_bottom = np.zeros(29)
 
     colors = plt.cm.gray(np.linspace(0, 1, 10))
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6.4, 5.4))
     color_indexes = [9, 8, 4, 0]
     labels = ['ML','SE','Unsure','Other']
 
@@ -435,21 +469,25 @@ def plot_contribution():
         ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]], bottom=ml_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
         ml_bottom -= ml_stacks[i]
     plt.legend( fontsize="22", loc='lower right')
-    plt.text(-2, 0.2, "Non-ML", rotation=-90, fontsize="20")
-    plt.text(-2, -0.5, "ML", rotation=-90, fontsize="20")
+    # plt.text(-7, 0.35, "Non-ML", rotation=90, fontsize="22")
+    # plt.text(-7, -0.5, "ML", rotation=90, fontsize="22")
+    # plt.text(-7, 0, "/", rotation=90, fontsize="22")
     ax.set_yticks([1, 0, -1])
     for tick in ax.get_yticklabels():
         tick.set_fontsize(22)
     for tick in ax.get_xticklabels():
-        tick.set_fontsize(5)
-    
+        tick.set_fontsize(6)
+    # plt.xticks(rotation=45)
+    plt.xlabel('Project', fontsize=22)
+    plt.ylabel('ML  /  Non-ML\nContribution', fontsize=22)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.set_xlim([-2.5, 28.6])
+    ax.set_xlim([-1, 28.6])
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
     plt.close()
+
 def plot_sankey1():
     gc = gspread.oauth()
     sheet = gc.open_by_key(SPREADSHEET_ID)
@@ -505,7 +543,7 @@ def plot_sankey1():
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=200, height=200, font_color='black',font_size=12)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=2), width=200, height=100, font_color='black',font_size=13)
     pio.write_image(fig, BASE_DIR + '/sankey_pred_proc_fail_safe.pdf')
 
 def plot_sankey2():
@@ -563,7 +601,7 @@ def plot_sankey2():
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=200, height=200, font_color='black',font_size=12)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=200, height=100, font_color='black',font_size=13)
     pio.write_image(fig, BASE_DIR + '/sankey_trajetory_model_importance.pdf')
 
 def plot_sankey3():
