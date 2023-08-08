@@ -12,47 +12,51 @@ import plotly.io as pio
 import plotly.express as px
 import colorcet as cc
 import time
-RQS={"trajectory": (3, 
-                    {"model-first": [0], 
-                     "product-first": [0], 
-                     "unsure":[0]
-                     }
-                     ), 
-     "modularity": (5, {}), 
-     "model_type": (10, {"Library/API": [0],
-                        "Pre-trained model":[0],
-                        "Own basic script": [0],
-                        "Self-trained model": [0]}),
-     "failsafe" : (12, {}),
-     "prediction_processing": (11, {}),
-     "model_importance": (13, {}),
-     "mutilple_model_dependency": (14, {"No":[0],
-                                        "Yes, separate functions":[0],
-                                        "Yes, used as alternative":[0],
-                                        "Yes, chain of execution": [0],
-                                        "Yes, combine predictions": [0]}),
-     "pipeline": (15, {"No pipeline": [0],
-                       "partial pipeline for data fetch" : [0],
-                       "Not automated": [0],
-                       "Binded by GUI": [0],
-                       "Automated": [0]}),
-     "testing": (19, {"No": [0],
-                      "System": [0],
-                      "Model and sys": [0],
-                      "All": [0]}),
-     "model_evolution": (20, {"Static": [0],
-                              "Dynamic": [0]})
-     }
+RQS = {"trajectory": (3,
+                      {"model-first": [0],
+                       "product-first": [0],
+                       "unsure": [0]
+                       }
+                      ),
+       "modularity": (5, {}),
+       "model_type": (10, {"Library/API": [0],
+                           "Pre-trained model": [0],
+                           "Own basic script": [0],
+                           "Self-trained model": [0]}),
+       "failsafe": (12, {}),
+       "prediction_processing": (11, {}),
+       "model_importance": (13, {}),
+       "mutilple_model_dependency": (14, {"No": [0],
+                                          "Yes, separate functions": [0],
+                                          "Yes, used as alternative": [0],
+                                          "Yes, chain of execution": [0],
+                                          "Yes, combine predictions": [0]}),
+       "pipeline": (15, {"No pipeline": [0],
+                         "partial pipeline for data fetch": [0],
+                         "Not automated": [0],
+                         "Binded by GUI": [0],
+                         "Automated": [0]}),
+       "testing": (19, {"No": [0],
+                        "System": [0],
+                        "Model and sys": [0],
+                        "All": [0]}),
+       "model_evolution": (20, {"Static": [0],
+                                "Dynamic": [0]})
+       }
 SPREADSHEET_ID = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
-# SPREADSHEET_ID_2 = '1fcQR4xhy-J2XH1LOdPm-APfm5B-ulkAfbYoqVL7NhGA'
+SPREADSHEET_ID_2 = '1aoLQrZZGc450VAV48pqPFpGAIxgEW5fTATUnyN6gD6c'
 CONTRIBUTION_SHEET_ID = '1vMQYHcVIx4ewd5gXHwVmY5thNCeiwsg8YfXwJ2ri1c4'
 BASE_DIR = 'plots'
+
+
 def clean(data):
     output = []
     for i in range(len(data)):
         if data[i].isdigit():
             output.append(data[i])
     return output
+
+
 def clean_float(data):
     output = []
     for i in range(len(data)):
@@ -62,10 +66,11 @@ def clean_float(data):
             # if (num < 10):
             output.append(num)
             # else:
-                # output.append(10)
+            # output.append(10)
         except ValueError:
             print(data[i])
     return output
+
 
 def plot_hist(data, bin=5, name=None):
     input = np.array(data, dtype=int)
@@ -74,22 +79,25 @@ def plot_hist(data, bin=5, name=None):
     plt.savefig(BASE_DIR + '/hist_' + name)
     plt.close()
 
+
 def plot_hist_with_threshold(data, bin=5, threshold=0, name=None):
     input = np.array(data, dtype=int)
     global_max = np.max(input)
     lower_input = input[input < threshold]
     lower_min = np.min(lower_input)
     lower_max = np.max(lower_input)
-    bins = np.arange(lower_min, lower_max + 1, (lower_max - lower_min + 1) / bin)
+    bins = np.arange(lower_min, lower_max + 1,
+                     (lower_max - lower_min + 1) / bin)
     bins = np.append(bins, global_max)
-    hist, bin_edges = np.histogram(input,bins)
-    fig,ax = plt.subplots()
-    ax.bar(range(len(hist)),hist,width=1,align='center',tick_label=
-        ['{} - {}'.format(round(bins[i]),round(bins[i+1])) for i,j in enumerate(hist)])
+    hist, bin_edges = np.histogram(input, bins)
+    fig, ax = plt.subplots()
+    ax.bar(range(len(hist)), hist, width=1, align='center', tick_label=[
+           '{} - {}'.format(round(bins[i]), round(bins[i+1])) for i, j in enumerate(hist)])
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
     plt.savefig(BASE_DIR + '/hist_' + name)
     plt.close()
+
 
 def plot_whisker(data, whis, name):
     input = np.array(data, dtype=int)
@@ -97,8 +105,10 @@ def plot_whisker(data, whis, name):
     plt.savefig(BASE_DIR + '/whis_' + name)
     plt.close()
 
+
 def plot_density(data, name, type=1):
-    input = np.array(data, dtype=int) if type == 1 else np.array(data, dtype=float)
+    input = np.array(data, dtype=int) if type == 1 else np.array(
+        data, dtype=float)
     # plt.hist(input, density=True)
     kde = gaussian_kde(input)
     x = np.linspace(min(input), max(input), 291)
@@ -107,129 +117,155 @@ def plot_density(data, name, type=1):
     plt.savefig(BASE_DIR + '/density_' + name)
     plt.close()
 
+
 def plot_density_log(data, name, type=1):
-    input = np.array(data, dtype=int) if type == 1 else np.array(data, dtype=float)
+    input = np.array(data, dtype=int) if type == 1 else np.array(
+        data, dtype=float)
     # plt.hist(input, density=True)
     kde = gaussian_kde(input)
     x = np.linspace(0.1, max(input), 1000)
-    fig, ax = plt.subplots(figsize=(6.4, 2.4))
+    fig, ax = plt.subplots(figsize=(5, 2.6))
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.semilogx(x, kde(x), base=2, color='grey')
     colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
-    plt.fill_between(x, kde(x), where=x<1, alpha=0.3, color=colors[0])
-    plt.fill_between(x, kde(x), where=x>1, alpha=0.3, color=colors[1])
+    plt.fill_between(x, kde(x), where=x < 1, alpha=0.3, color=colors[0])
+    plt.fill_between(x, kde(x), where=x > 1, alpha=0.3, color=colors[1])
     plt.ylim([0, 0.25])
     plt.xlim([0.15, 6])
     ax.set_yticks([0, 0.25])
     ax.set_xticks([0.25, 0.5, 1, 2, 4])
-    plt.xlabel('Relative Score', fontsize=22)
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f'{abs(x):g}' if x != 0 else '0'))
-    
+    plt.xlabel('Rel Coupling Idx', fontsize=20)
+    plt.ylabel('Density', fontsize=20, labelpad=-50)
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(
+        lambda x, pos: f'{abs(x):g}' if x != 0 else '0'))
+
     plt.xticks(fontsize=22)
     plt.yticks(fontsize=22)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_' + name)
     plt.close()
 
+
 def plot_two_cat(data, cat, name, threshold=-1, xticks=[], yticks=[], xlabel=''):
-    data1 = []
-    data2 = []
-    num1 = 0
-    num2 = 0
-    num3 = 0
-    for i in range(len(data)):
-        if cat[i] == 'Products based on personal interest' or cat[i] == 'Research product':
-            data1.append(data[i])
-            if (cat[i] == 'Products based on personal interest'):
-                num1 += 1
-            else:
-                num2 += 1
-        elif cat[i] == 'Final end-user product':
-            data2.append(data[i])
-            num3+=1
-        else:
-            print('no match')
-            print(cat[i])
-    print(len(data1))
-    print(len(data2))
+    # data1 = []
+    # data2 = []
+    # num1 = 0
+    # num2 = 0
+    # num3 = 0
+    # for i in range(len(data)):
+    #     if cat[i] == 'Products based on personal interest' or cat[i] == 'Research product':
+    #         data1.append(data[i])
+    #         if (cat[i] == 'Products based on personal interest'):
+    #             num1 += 1
+    #         else:
+    #             num2 += 1
+    #     elif cat[i] == 'Final end-user product':
+    #         data2.append(data[i])
+    #         num3 += 1
+    #     else:
+    #         print('no match')
+    #         print(cat[i])
+    # print(len(data1))
+    # print(len(data2))
     input = np.array(data, dtype=int)
-    input1 = np.array(data1, dtype=int)
-    input2 = np.array(data2, dtype=int)
+    # input1 = np.array(data1, dtype=int)
+    # input2 = np.array(data2, dtype=int)
     size = len(input)
     if threshold > 0:
         input = input[input < threshold]
         print(name + " get rid of " + str(size - len(input)))
-        input1 = input1[input1 < threshold]
-        input2 = input2[input2 < threshold]
+        # input1 = input1[input1 < threshold]
+        # input2 = input2[input2 < threshold]
     # plt.hist(input, density=True)
-    kde1 = gaussian_kde(input1)
-    kde2 = gaussian_kde(input2)
-    x1 = np.linspace(min(input), max(input), 1000)
-    x2 = np.linspace(min(input), max(input), 1000)
+    kde = gaussian_kde(input)
+    # kde1 = gaussian_kde(input1)
+    # kde2 = gaussian_kde(input2)
+    min_input = min(input)
+    x = np.linspace(min_input if min_input > 0 else 1, max(input), 1000)
+    # x1 = np.linspace(min(input), max(input), 1000)
+    # x2 = np.linspace(min(input), max(input), 1000)
     colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
     # plt.xscale('log')
     fig, ax = plt.subplots(figsize=(5.5, 2.4))
-    plt.plot(x1, kde1(x1), alpha=0.5,color=colors[0])
-    plt.plot(x2, kde2(x2), alpha=0.5,color=colors[0])
-    plt.fill_between(x1, kde1(x1), alpha=0.5, color=colors[1])
-    plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
-    patch1 = mpatches.Patch(color=colors[1], label='End-user')
-    patch2 = mpatches.Patch(color=colors[0], label='Personal interest/Research based')
+    ax.semilogx(x, kde(x), base=2, color='grey')
+    print("x len " + str(len(x)) + " kde len " + str(len(kde(x))))
+    plt.fill_between(x, kde(x), alpha=0.5, color=colors[1])
+    # plt.plot(x, kde(x), alpha=0.5, color=colors[0])
+    # plt.plot(x1, kde1(x1), alpha=0.5, color=colors[0])
+    # plt.plot(x2, kde2(x2), alpha=0.5, color=colors[0])
+    # plt.fill_between(x1, kde1(x1), alpha=0.5, color=colors[1])
+    # plt.fill_between(x2, kde2(x2), alpha=0.5, color=colors[0])
+    # patch1 = mpatches.Patch(color=colors[1], label='End-user')
+    # patch2 = mpatches.Patch(
+    #     color=colors[0], label='Personal interest/Research based')
     # plt.legend(handles=[patch1, patch2],fontsize="14")
     # plt.xticks(fontsize=25)
     # plt.yticks(fontsize=25)
     ax.set_xticks(xticks)
-    ax.set_yticks(yticks)
-    ax.yaxis.get_offset_text().set_fontsize(22)
+    ax.set_yticks([])
+    ax.set_yticklabels([])
+    ax.spines['left'].set_visible(False)
     if name == 'codebase.pdf':
         ax.xaxis.get_offset_text().set_visible(False)
-        ax.set_xticklabels(['{:.1f}e6'.format(x/1000000) if x > 0 else 0 for x in ax.get_xticks()])
+        ax.set_xticklabels(['{:.1f}GB'.format(x/1000000)
+                            if x >= 1000000 else ('{:.0f}MB'.format(x/1000) if x >= 1000 else '{:.0f}KB'.format(x)) for x in ax.get_xticks()])
         ax.yaxis.get_offset_text().set_visible(False)
-        ax.set_yticklabels(['{:.1f}e-6'.format(x * 1000000) if x > 0 else 0 for x in ax.get_yticks()])
+        # ax.set_yticklabels(['' for x in ax.get_yticks()])
     if name == 'stars.pdf':
         ax.xaxis.get_offset_text().set_visible(False)
-        ax.set_xticklabels(['{:.0f}e4'.format(x/10000) if x > 0 else 0 for x in ax.get_xticks()])
+        ax.set_xticklabels(
+            ['{:.0f}0000'.format(x/10000) if x >= 10000 else x for x in ax.get_xticks()])
         # ax.yaxis.get_offset_text().set_visible(True)
-        ax.set_yticklabels(['{}e-4'.format(int(x * 10000)) if x > 0 else 0 for x in ax.get_yticks()])
+        # ax.set_yticklabels(['{}e-4'.format(int(x * 10000)) if x > 0 else 0 for x in ax.get_yticks()])
+    if name == 'contribs.pdf':
+        ax.xaxis.get_offset_text().set_visible(False)
+        ax.set_xticklabels(
+            [x for x in ax.get_xticks()])
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     for tick in ax.get_xticklabels():
         tick.set_fontsize(22)
-    for tick in ax.get_yticklabels():
-        tick.set_fontsize(22)
+    # for tick in ax.get_yticklabels():
+    #     tick.set_fontsize(22)
     plt.ylim(bottom=0)
     plt.xlim(left=0)
-    plt.xlabel(xlabel, fontsize=22, labelpad= -22)
+    # plt.xlabel(xlabel, fontsize=22, labelpad=-22)
+    plt.xlabel(xlabel, fontsize=22)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/density_all_' + name)
     plt.close()
-    print('b')
-    print(num1)
-    print(num2)
-    print(num3)
-    print('e')
+    # print('b')
+    # print(num1)
+    # print(num2)
+    # print(num3)
+    # print('e')
+
 
 def plot_two_cat_all():
     gc = gspread.oauth()
-    sheet = gc.open_by_key(SPREADSHEET_ID)
-    mobile_sheet = sheet.worksheet("Mobile")
-    desktop_sheet = sheet.worksheet("Desktop")
-    web_sheet = sheet.worksheet("Web")
-    work_sheets = [mobile_sheet, desktop_sheet, web_sheet]
+    sheet = gc.open_by_key(SPREADSHEET_ID_2)
+    # mobile_sheet = sheet.worksheet("Mobile")
+    # desktop_sheet = sheet.worksheet("Desktop")
+    # web_sheet = sheet.worksheet("Web")
+    sum_sheet = sheet.worksheet("Full Dataset(Discarded projects removed)")
+    work_sheets = [sum_sheet]
     stars = []
     contribs = []
     codebase = []
     cat = []
     for ws in work_sheets:
-        cat = cat + ws.col_values(7)[1:]
-        stars = stars + clean(ws.col_values(9)[1:])
+        stars = stars + clean(ws.col_values(8)[1:])
         print(len(stars))
-        contribs = contribs + clean(ws.col_values(10)[1:])
-        codebase = codebase + clean(ws.col_values(11)[1:])
-    plot_two_cat(stars, cat, "stars.pdf", 10000, [0, 10000], [0.0007], 'Star')
-    plot_two_cat(contribs, cat, "contribs.pdf", 170, [0, 160], [0.06], 'Contributor Count')
-    plot_two_cat(codebase, cat, "codebase.pdf", 1500000, [0, 1.4e6], [3.5e-6], 'Codebase Size')
+        contribs = contribs + clean(ws.col_values(9)[1:])
+        codebase = codebase + clean(ws.col_values(10)[1:])
+    plot_two_cat(stars, cat, "stars.pdf", 10000, [
+                 70, 300, 1250, 10000], [0.0007], 'Star Count')
+    plot_two_cat(contribs, cat, "contribs.pdf", 160, [
+                 2, 10, 40, 160], [0.06], 'Contributor Count')
+    plot_two_cat(codebase, cat, "codebase.pdf", 1500000,
+                 [1e3, 5.5e3, 8.8e4, 1.4e6], [3.5e-6], 'Codebase Size')
+
 
 def plot_sheet_1():
     gc = gspread.oauth()
@@ -258,34 +294,46 @@ def plot_sheet_1():
     plot_density(contribs, "contribs.pdf")
     plot_density(codebase, "codebase.pdf")
 
+
 def plot_score():
     gc = gspread.oauth()
     sheets = gc.open_by_key(SPREADSHEET_ID)
     sheet = sheets.worksheet('Findings')
     score = []
-    score = score + clean_float(sheet.row_values(10))
+    score = score + clean_float(sheet.row_values(12))
     plot_density_log(score, "score.pdf", 0)
 
+
 def plot_contributor_background_area(summary_sheet):
-    total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
+    total = np.array(summary_sheet.col_values(4)[1:], dtype=int)
     ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
     se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
     id = summary_sheet.col_values(1)[1:]
     colors = plt.cm.gray(np.linspace(0, 1, 3))[:2]
-    fig,ax = plt.subplots()
+    fig, ax = plt.subplots()
     plt.stackplot(id, ml, se, labels=['ML', 'SE'], colors=colors)
     for tick in ax.get_xticklabels():
         tick.set_fontsize(5)
     plt.savefig(BASE_DIR + '/contributors_area.pdf')
     plt.close()
 
+
 def plot_contributor_background_stacked(summary_sheet):
-    total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
+    total = np.array(summary_sheet.col_values(4)[1:], dtype=int)
     ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
     se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
     unsure = np.array(summary_sheet.col_values(23)[1:], dtype=int)
     other = np.array(summary_sheet.col_values(24)[1:], dtype=int)
-    id = summary_sheet.col_values(1)[1:]
+    ids = summary_sheet.col_values(1)[1:]
+    id = []
+    for i in ids:
+        if len(i) == 3:
+            id.append(i)
+            continue
+        c = "P0"
+        c = c + i[1]
+        id.append(c)
+
     class Contributor:
         def __init__(self, total, ml, se, unsure, other, id):
             self.total = total
@@ -295,51 +343,72 @@ def plot_contributor_background_stacked(summary_sheet):
             self.unsure = unsure
             self.id = id
     contributors = []
+    total_se = 0
+    total_ml = 0
+    total_total = 0
     for i in range(len(total)):
-        contributors.append(Contributor(total[i], ml[i], se[i], unsure[i], other[i], id[i]))
+        contributors.append(Contributor(
+            total[i], ml[i], se[i], unsure[i], other[i], id[i]))
+        # print("ID: " + str(contributors[-1].id) + " SE: " + str(contributors[-1].se) + " Total: " + str(contributors[-1].se + contributors[-1].ml + contributors[-1].other + contributors[-1].unsure))
+        total_se += contributors[-1].se
+        total_ml += contributors[-1].ml
+        total_total += contributors[-1].se + \
+            contributors[-1].ml + contributors[-1].other
+    print("total: " + str(total_total) + " se: " +
+          str(total_se) + " ml: " + str(total_ml))
+
     def sorter(item):
         return -1 * item.total
     contributors = sorted(contributors, key=sorter)
-    ml = np.array(list(map(lambda obj: obj.ml, contributors)) ,dtype=int)
-    se = np.array(list(map(lambda obj: obj.se, contributors)) ,dtype=int)
-    unsure = np.array(list(map(lambda obj: obj.unsure, contributors)) ,dtype=int)
-    other = np.array(list(map(lambda obj: obj.other, contributors)) ,dtype=int)
-    id = list(map(lambda obj: obj.id, contributors)) 
+    ml = np.array(list(map(lambda obj: obj.ml, contributors)), dtype=int)
+    se = np.array(list(map(lambda obj: obj.se, contributors)), dtype=int)
+    unsure = np.array(
+        list(map(lambda obj: obj.unsure, contributors)), dtype=int)
+    other = np.array(list(map(lambda obj: obj.other, contributors)), dtype=int)
+    id = list(map(lambda obj: obj.id, contributors))
 
     colors = plt.cm.gray(np.linspace(0, 1, 10))
-    fig,ax = plt.subplots(figsize=(6.4, 3))
+    fig, ax = plt.subplots(figsize=(6.4, 3.6))
     bottom = np.zeros(30)
-    ax.bar(id, ml, label='ML', color=colors[9], bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+    ax.bar(id, ml, label='ML', color=colors[0], bottom=bottom,
+           edgecolor='black', linestyle='solid', linewidth=0.5)
     bottom += ml
-    ax.bar(id, se, label = 'SE', color=colors[8],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+    ax.bar(id, se, label='SE', color=colors[9], bottom=bottom,
+           edgecolor='black', linestyle='solid', linewidth=0.5)
     bottom += se
-    ax.bar(id, unsure, label = 'Unsure', color=colors[4],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+    ax.bar(id, unsure, label='Unsure',
+           color=colors[4], bottom=bottom, edgecolor='black', linestyle='solid', linewidth=0.5)
     bottom += unsure
-    ax.bar(id, other, label = 'Other', color=colors[0],bottom=bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
-    ax.legend(fontsize="22", loc='upper right', bbox_to_anchor=(1, 1.2))
-    plt.xlim(-1,30)
+    ax.bar(id, other, label='Other',
+           color=colors[8], bottom=bottom, edgecolor='black', linestyle='solid', linewidth=0.5)
+    legend = ax.legend(fontsize="18", loc='upper right', bbox_to_anchor=(1, 1.2))
+    legend.set_title('Background', prop={'size': 18}) 
+    plt.xlim(-1, 30)
     plt.xlabel('Project', fontsize=22)
-    plt.ylabel('Count', fontsize=22, labelpad=-25)
+    plt.ylabel('Core\nContributor\nCount', fontsize=18, labelpad=-25)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.set_yticks([0, 18])
+    plt.xticks(rotation=90)
     for tick in ax.get_xticklabels():
-        tick.set_fontsize(6)
+        tick.set_fontsize(12)
     for tick in ax.get_yticklabels():
         tick.set_fontsize(22)
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributors_stacked.pdf')
     plt.close()
 
+
 def plot_contributor_background_scattered(summary_sheet):
-    total = np.array(summary_sheet.col_values(4)[1:],dtype=int)
+    total = np.array(summary_sheet.col_values(4)[1:], dtype=int)
     ml = np.array(summary_sheet.col_values(6)[1:], dtype=int)
     se = np.array(summary_sheet.col_values(7)[1:], dtype=int)
     id = summary_sheet.col_values(1)[1:]
     plt.scatter(ml, se, color='black')
-    
+
     plt.savefig(BASE_DIR + '/contributors_scatter.pdf')
     plt.close()
+
 
 def plot_attributes(summary_sheet, col, name, group={}):
     values = summary_sheet.col_values(col)[1:]
@@ -357,30 +426,34 @@ def plot_attributes(summary_sheet, col, name, group={}):
     label = 'a'
     bbox = dict(boxstyle="Circle", fc="1")
     arrowprops = dict(
-    arrowstyle="->",
-    connectionstyle="arc3",
-    color='white')
+        arrowstyle="->",
+        connectionstyle="arc3",
+        color='white')
     offset_left = 40
     offset_right = 25
     for cat, count in group.items():
-        p = ax.barh([""], count, label=cat, left=left, color=colors[i + 2], edgecolor='black',linestyle='solid',linewidth=0.5)
+        p = ax.barh([""], count, label=cat, left=left, color=colors[i + 2],
+                    edgecolor='black', linestyle='solid', linewidth=0.5)
         # ax.bar_label(p, label_type='center', labels=[('('+label+')')], color='white')
         if i == 0:
-            ax.annotate(label, (left[0], 0),xytext=(-1 * offset_left, -8), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
+            ax.annotate(label, (left[0], 0), xytext=(-1 * offset_left, -8),
+                        textcoords='offset points', bbox=bbox, arrowprops=arrowprops, fontsize='30')
         elif i == len(group) - 1:
-            ax.annotate(label, (left[0] + count[0], 0),xytext=(offset_right, -8), textcoords='offset points',bbox=bbox, arrowprops=arrowprops, fontsize='30')
+            ax.annotate(label, (left[0] + count[0], 0), xytext=(offset_right, -8),
+                        textcoords='offset points', bbox=bbox, arrowprops=arrowprops, fontsize='30')
         label = chr(ord(label) + 1)
         print(cat)
         left[0] += count[0]
-        i+=1
+        i += 1
     ax.set_ylim(-0.5, 0.6)
     plt.xticks([])
     plt.yticks([])
-    plt.xlim(-5,35)
+    plt.xlim(-5, 35)
     ax.axis('off')
     plt.tight_layout()
-    fig.savefig(BASE_DIR + '/' + name, pad_inches=0,bbox_inches='tight')
+    fig.savefig(BASE_DIR + '/' + name, pad_inches=0, bbox_inches='tight')
     plt.close()
+
 
 def plot_contribution():
     gc = gspread.oauth()
@@ -389,7 +462,12 @@ def plot_contribution():
     for i in range(1, 31):
         if i == 22:
             continue
-        sheet_ids.append("P" + str(i))
+        if i < 10:
+            id = "P0" + str(i)
+            sheet_ids.append(id)
+        else:
+            id = "P" + str(i)
+            sheet_ids.append(id)
     work_sheets = []
     for id in sheet_ids:
         work_sheets.append(sheet.worksheet(id))
@@ -402,6 +480,7 @@ def plot_contribution():
     ml_ml = []
     ml_unsure = []
     ml_other = []
+
     class Node:
         def __init__(self, se_se, se_ml, se_unsure, se_other, ml_se, ml_ml, ml_unsure, ml_other, id):
             self.se_se = se_se
@@ -415,7 +494,7 @@ def plot_contribution():
             self.id = id
             self.se_total = se_se + se_ml + se_unsure + se_other
             self.ml_total = ml_se + ml_ml + ml_unsure + ml_other
-        
+
     def sorter(node):
         return -1 * node.ml_total
     nodes = []
@@ -458,35 +537,46 @@ def plot_contribution():
     ml_bottom = np.zeros(29)
 
     colors = plt.cm.gray(np.linspace(0, 1, 10))
-    fig, ax = plt.subplots(figsize=(6.4, 5.4))
-    color_indexes = [9, 8, 4, 0]
-    labels = ['ML','SE','Unsure','Other']
+    fig, ax = plt.subplots(figsize=(7.2, 6.1))
+    color_indexes = [0, 9, 4, 8]
+    labels = ['ML', 'SE', 'Unsure', 'Other']
 
     for i in range(len(se_stacks)):
-        ax.bar(sheet_ids, se_stacks[i], label=labels[i], color=colors[color_indexes[i]], bottom=se_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+        ax.bar(sheet_ids, se_stacks[i], label=labels[i], color=colors[color_indexes[i]],
+               bottom=se_bottom, edgecolor='black', linestyle='solid', linewidth=0.5)
         se_bottom += se_stacks[i]
     for i in range(len(ml_stacks)):
-        ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]], bottom=ml_bottom, edgecolor='black',linestyle='solid',linewidth=0.5)
+        ax.bar(sheet_ids, -1*ml_stacks[i], label='', color=colors[color_indexes[i]],
+               bottom=ml_bottom, edgecolor='black', linestyle='solid', linewidth=0.5)
         ml_bottom -= ml_stacks[i]
-    plt.legend( fontsize="22", loc='lower right')
+    legend = plt.legend(fontsize="18", loc='lower right')
+    legend.set_title('Contributor\nBackground', prop={'size': 18}) 
     # plt.text(-7, 0.35, "Non-ML", rotation=90, fontsize="22")
     # plt.text(-7, -0.5, "ML", rotation=90, fontsize="22")
     # plt.text(-7, 0, "/", rotation=90, fontsize="22")
     ax.set_yticks([1, 0, -1])
+    plt.xticks(rotation=90)
+    ax.set_yticklabels(['100%\nNon-ML', '0', '100%\nML'])
     for tick in ax.get_yticklabels():
         tick.set_fontsize(22)
     for tick in ax.get_xticklabels():
         tick.set_fontsize(6)
-    # plt.xticks(rotation=45)
+    plt.yticks(rotation=90)
+    for tick in ax.get_xticklabels():
+        tick.set_fontsize(12)
     plt.xlabel('Project', fontsize=22)
-    plt.ylabel('ML  /  Non-ML\nContribution', fontsize=22)
+    plt.ylabel('Code Changes by\nCore Contributors', fontsize=18, labelpad=-25)
+    # plt.ylabel('Contribution', fontsize=22)
+
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.set_xlim([-1, 28.6])
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
+    # ax.yaxis.set_major_formatter(ticker.FuncFormatter(
+    #     lambda y, pos: f'{abs(y):g}' if y != 0 else '0'))
     plt.tight_layout()
     plt.savefig(BASE_DIR + '/contributions_stacked.pdf')
     plt.close()
+
 
 def plot_sankey1():
     gc = gspread.oauth()
@@ -494,7 +584,10 @@ def plot_sankey1():
     summary_sheet = sheet.worksheet("Summary Table")
     col_pred_proc = summary_sheet.col_values(11)[1:]
     col_fail_safe = summary_sheet.col_values(12)[1:]
-    labels = [ "Augment", "Prompt","Automate", "No: retrain", "No: score","Yes", "No: none"]
+    # labels = ["Augment", "Prompt", "Automate",
+    #           "No: retrain", "No: score", "Yes", "No: none"]
+    labels = ["Augment", "Prompt", "Automate",
+              "Retrain", "Score-check", "Safeguard", "No checks"]
     label_index = {}
     for i in range(len(labels)):
         label_index[labels[i]] = i
@@ -502,6 +595,10 @@ def plot_sankey1():
     for i in range(len(col_pred_proc)):
         if (col_fail_safe[i] == 'Unsure'):
             continue
+        if (col_fail_safe[i] == 'No'):
+            col_fail_safe[i] = 'No checks'
+        if (col_fail_safe[i] == 'Yes'):
+            col_fail_safe[i] = "Safeguard"
         pair = (label_index[col_pred_proc[i]], label_index[col_fail_safe[i]])
         if pair not in links:
             links[pair] = 0
@@ -526,25 +623,28 @@ def plot_sankey1():
 
     # colors_op.append(rgba_string)
     # colors_op = ['rgba(235,176,45,0.3)', 'rgba(157,186,0,0.3)', 'rgba(37,232,231,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)']
-    colors_op = ['rgba(235,176,45,0.3)', 'rgba(235,176,45,0.3)', 'rgba(235,176,45,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)']
-    link = dict(source = source, target = target, value = value, color=colors_op)
-    # node = dict(label = labels, 
-    #             pad = 5, 
+    colors_op = ['rgba(235,176,45,0.3)', 'rgba(235,176,45,0.3)',
+                 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)', 'rgba(235,176,45,0.3)', 'rgba(246,53,29,0.3)']
+    link = dict(source=source, target=target, value=value, color=colors_op)
+    # node = dict(label = labels,
+    #             pad = 5,
     #             thickness = 20,
     #             color='grey')
-    node = dict(label = labels, 
-                pad = 5, 
-                thickness = 2,
-                color = 'black')
+    node = dict(label=labels,
+                pad=9,
+                thickness=2,
+                color='black')
     print(link)
-    data = go.Sankey(link = link, node = node)
-    some_name="some_figure.pdf"
-    fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    data = go.Sankey(link=link, node=node)
+    some_name = "some_figure.pdf"
+    fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=2), width=200, height=100, font_color='black',font_size=13)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=5),
+                      width=160, height=120, font_color='black', font_size=13)
     pio.write_image(fig, BASE_DIR + '/sankey_pred_proc_fail_safe.pdf')
+
 
 def plot_sankey2():
     gc = gspread.oauth()
@@ -552,7 +652,8 @@ def plot_sankey2():
     summary_sheet = sheet.worksheet("Summary Table")
     col_tra = summary_sheet.col_values(3)[1:]
     col_imp = summary_sheet.col_values(13)[1:]
-    labels = ["model-first", "product-first", "unsure", "Core", "Optional", "Significant"]
+    labels = ["Model-first", "Product-first", "Unsure",
+              "Core", "Optional", "Significant"]
     label_index = {}
     for i in range(len(labels)):
         label_index[labels[i]] = i
@@ -560,6 +661,12 @@ def plot_sankey2():
     for i in range(len(col_tra)):
         if col_imp[i] == 'None':
             continue
+        if col_tra[i] == 'model-first':
+            col_tra[i] = 'Model-first'
+        if col_tra[i] == 'product-first':
+            col_tra[i] = 'Product-first'
+        if col_tra[i] == 'unsure':
+            col_tra[i] = 'Unsure'
         pair = (label_index[col_tra[i]], label_index[col_imp[i]])
         if pair not in links:
             links[pair] = 0
@@ -584,25 +691,28 @@ def plot_sankey2():
 
     # colors_op.append(rgba_string)
     # colors_op = ['rgba(235,176,45,0.3)', 'rgba(157,186,0,0.3)', 'rgba(37,232,231,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)']
-    colors_op = ['rgba(235,176,45,0.3)', 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)']
-    link = dict(source = source, target = target, value = value, color=colors_op)
-    # node = dict(label = labels, 
-    #             pad = 5, 
+    colors_op = ['rgba(235,176,45,0.3)', 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)',
+                 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)']
+    link = dict(source=source, target=target, value=value, color=colors_op)
+    # node = dict(label = labels,
+    #             pad = 5,
     #             thickness = 20,
     #             color='grey')
-    node = dict(label = labels, 
-                pad = 5, 
-                thickness = 2,
-                color = 'black')
+    node = dict(label=labels,
+                pad=5,
+                thickness=2,
+                color='black')
     print(link)
-    data = go.Sankey(link = link, node = node)
-    some_name="some_figure.pdf"
-    fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    data = go.Sankey(link=link, node=node)
+    some_name = "some_figure.pdf"
+    fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=200, height=100, font_color='black',font_size=13)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5),
+                      width=160, height=120, font_color='black', font_size=13)
     pio.write_image(fig, BASE_DIR + '/sankey_trajetory_model_importance.pdf')
+
 
 def plot_sankey3():
     gc = gspread.oauth()
@@ -610,7 +720,8 @@ def plot_sankey3():
     summary_sheet = sheet.worksheet("Summary Table")
     col_mod = summary_sheet.col_values(5)[1:]
     col_tra = summary_sheet.col_values(13)[1:]
-    labels = ["more modular", "less modular", "Core", "Optional", "Significant"]
+    labels = ["more modular", "less modular",
+              "Core", "Optional", "Significant"]
     label_index = {}
     for i in range(len(labels)):
         label_index[labels[i]] = i
@@ -629,38 +740,95 @@ def plot_sankey3():
         source.append(pair[0])
         target.append(pair[1])
         value.append(count)
-    link = dict(source = source, target = target, value = value)
-    # node = dict(label = labels, 
-    #             pad = 5, 
+    link = dict(source=source, target=target, value=value)
+    # node = dict(label = labels,
+    #             pad = 5,
     #             thickness = 20,
     #             color='grey')
-    node = dict(label = labels, 
-                pad = 5, 
-                thickness = 2,
-                color = 'black')
+    node = dict(label=labels,
+                pad=5,
+                thickness=2,
+                color='black')
     print(link)
-    data = go.Sankey(link = link, node = node)
-    some_name="some_figure.pdf"
-    fig=px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    data = go.Sankey(link=link, node=node)
+    some_name = "some_figure.pdf"
+    fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
     pio.write_image(fig, some_name)
     time.sleep(2)
     fig = go.Figure(data)
-    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5), width=400, height=200, font_color='black',font_size=12)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=1.5),
+                      width=400, height=200, font_color='black', font_size=12)
     pio.write_image(fig, BASE_DIR + '/sankey_modular_model_importance.pdf')
+
+
+def plot_sankey4():
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
+    col_model = summary_sheet.col_values(10)[1:]
+    col_se_no = summary_sheet.col_values(7)[1:]
+    col_ds_no = summary_sheet.col_values(6)[1:]
+
+    labels = ["SE", "ML",
+              "Library/API", "Self-trained model", "Pre-trained model", "Own basic script"]
+    label_index = {}
+    for i in range(len(labels)):
+        label_index[labels[i]] = i
+    links = {}
+    for i in range(len(col_model)):
+        if col_se_no[i] > col_ds_no[i]:
+            pair = (0, label_index[col_model[i]])
+            if pair not in links:
+                links[pair] = 0
+            links[pair] += 1
+        elif col_se_no[i] < col_ds_no[i]:
+            pair = (1, label_index[col_model[i]])
+            if pair not in links:
+                links[pair] = 0
+            links[pair] += 1
+    source = []
+    target = []
+    value = []
+    for pair, count in links.items():
+        print("Background: " + labels[pair[0]] + ", Model type: " +
+              labels[pair[1]] + ", Count: " + str(count))
+    for pair, count in links.items():
+        source.append(pair[0])
+        target.append(pair[1])
+        value.append(count)
+    colors_op = ['rgba(235,176,45,0.3)', 'rgba(170,158,255,0.3)', 'rgba(170,158,255,0.3)',
+                 'rgba(170,158,255,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)', 'rgba(246,53,29,0.3)']
+    link = dict(source=source, target=target, value=value, color=colors_op)
+    node = dict(label=labels,
+                pad=5,
+                thickness=2,
+                color='black')
+    fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+    data = go.Sankey(link=link, node=node)
+    some_name = "some_figure.pdf"
+    pio.write_image(fig, some_name)
+    time.sleep(2)
+    fig = go.Figure(data)
+    fig.update_layout(margin=dict(l=1.5, r=1.5, t=1.5, b=5),
+                      width=160, height=120, font_color='black', font_size=13)
+    pio.write_image(fig, BASE_DIR + '/sankey_contributor_bg_model_type.pdf')
+
 
 def main():
     # plot_score()
-    # gc = gspread.oauth()
-    # sheet = gc.open_by_key(SPREADSHEET_ID)
-    # summary_sheet = sheet.worksheet("Summary Table")
-    # plot_contributor_background_stacked(summary_sheet)
-    # plot_contribution()
-    plot_two_cat_all()
+    gc = gspread.oauth()
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    summary_sheet = sheet.worksheet("Summary Table")
+    plot_contributor_background_stacked(summary_sheet)
+    plot_contribution()
+    # plot_two_cat_all()
     # for name, (col, group) in RQS.items():
     #     plot_attributes(summary_sheet, col, name+'.pdf', group)
     # # plot_sankey3()
     # plot_sankey1()
     # plot_sankey2()
+    # plot_sankey4()
+
 
 if __name__ == '__main__':
     main()
